@@ -1,3 +1,6 @@
+const hooks = [];
+let currentComponent = 0;
+
 export class Component {
     constructor(props) {
       this.props = props;
@@ -28,6 +31,18 @@ export function createDOM(node){
       }
   }
 
+  function useState(initValue) {
+      let position = currentComponent - 1;
+      if(!hooks[position]) {
+          hooks[position] = initValue;
+      }
+
+      const modifier = nextValue => {
+          hooks[position] = nextValue;
+      };
+      return [hooks[position], modifier];
+  }
+
   export function createElement(tag, props, ...children) {
       props = props || {};
       if(typeof tag === 'function') {
@@ -35,6 +50,10 @@ export function createDOM(node){
               const instance = new tag(makeProps(props, children));
               return instance.render();
           } else {
+
+              hooks[currentComponent] = null;
+              currentComponent++;
+
               if(children.length > 0){
                   return tag(makeProps(props, children));
               } else {
@@ -46,6 +65,21 @@ export function createDOM(node){
       }
   }
 
-  export function render(vdom, container) {
-    container.appendChild(createDOM(vdom));
-  }
+//   export function render(vdom, container) {
+//     container.appendChild(createDOM(vdom));
+//   }
+
+  // 실제 DOM, 이전 virtualDOM, 새로 입력받은 virtualDOM으로 바뀐내용을 파악함
+  export const render = (function () {
+      let prevDom = null;
+      return function(vdom, container) {
+          if(prevDom === null) {
+              prevDom = vdom;
+          }
+
+          // diff
+
+
+          container.appendChild(createDOM(vdom));
+      }
+  })(); 
